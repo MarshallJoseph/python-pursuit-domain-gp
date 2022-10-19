@@ -57,11 +57,12 @@ class PredPreySimulator:
         self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
         self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
-        # Initialize Prey
-        self.prey = [PreyAgent(self.rows, self.cols) for _ in range(self.num_prey)]
         # Initialize Discrete Environment (OPEN, PRED, PREY, DEAD)
         self.matrix = [['OPEN' for _ in range(self.cols)] for _ in range(self.rows)]  # fill matrix with 'OPEN' cells
+        # Initialize Predator
         self.matrix[self.y_pos][self.x_pos] = 'PRED'  # initialize predator location on discrete overlay
+        # Initialize Prey
+        self.prey = [PreyAgent(self.rows, self.cols) for _ in range(self.num_prey)]
         for p in self.prey:
             px_pos = int(p.x_pos)  # remove decimals for discrete overlay
             py_pos = int(p.y_pos)  # remove decimals for discrete overlay
