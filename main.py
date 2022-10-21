@@ -81,6 +81,9 @@ class PredPreySimulator:
         self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
 
+    # TODO: Create movement for predator/prey and test their functionality
+    # TODO: Add terminals/operators for GP tree
+    # TODO: Test GP tree generation with DEAP
 
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
