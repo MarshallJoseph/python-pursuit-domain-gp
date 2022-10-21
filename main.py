@@ -52,21 +52,22 @@ class PredPreySimulator:
         self.captured = 0  # number of prey captured by predator
         self.routine = None
         # Predator Properties
-        self.x_pos = int(self.rows / 2)  # x coordinate of predator in 2-d space
-        self.y_pos = int(self.cols / 2)  # y coordinate of predator in 2-d space
+        self.x_pos = self.rows / 2  # x coordinate of predator in 2-d space
+        self.y_pos = self.cols / 2  # y coordinate of predator in 2-d space
         self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
         self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
         # Initialize Discrete Environment (OPEN, PRED, PREY, DEAD)
         self.matrix = [['OPEN' for _ in range(self.cols)] for _ in range(self.rows)]  # fill matrix with 'OPEN' cells
         # Initialize Predator
-        self.matrix[self.y_pos][self.x_pos] = 'PRED'  # initialize predator location on discrete overlay
+        self.matrix[int(self.y_pos)][int(self.x_pos)] = 'PRED'  # initialize predator location on discrete overlay
+        print("predator " + "x: " + str(self.x_pos) + ", y: " + str(self.y_pos))
         # Initialize Prey
         self.prey = [PreyAgent(self.rows, self.cols) for _ in range(self.num_prey)]
-        for p in self.prey:
+        for i, p in enumerate(self.prey):
             px_pos = int(p.x_pos)  # remove decimals for discrete overlay
             py_pos = int(p.y_pos)  # remove decimals for discrete overlay
-            print("x: " + str(px_pos) + ", y: " + str(py_pos))
+            print("prey " + str(i) + ": x: " + str(px_pos) + ", y: " + str(py_pos))
             self.matrix[py_pos][px_pos] = 'PREY'  # initialize prey location on discrete overlay
 
         for row in self.matrix:  # print discrete overlay in matrix form
