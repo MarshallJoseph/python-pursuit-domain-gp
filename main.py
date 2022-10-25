@@ -13,11 +13,25 @@ from deap import gp
 
 from array import *
 
+
 # TODO: Create movement for predator/prey and test their functionality
 # TODO: Create rotation for predator/prey and test their functionality
 # TODO: Create speed update function for predator and test their functionality
 # TODO: Add terminals/operators for GP tree
 # TODO: Test GP tree generation with DEAP
+
+
+def progn(*args):
+    for arg in args:
+        arg()
+
+
+def prog2(out1, out2):
+    return partial(progn, out1, out2)
+
+
+def prog3(out1, out2, out3):
+    return partial(progn, out1, out2, out3)
 
 
 class PreyAgent:
@@ -100,6 +114,7 @@ class PredPreySimulator:
         self.y_rot = new_y_rot
 
     def set_speed(self, speed):
+        # check if 0 < speed < 1 before assigning
         if speed > 0:
             self.speed = min(speed, 1)
 
