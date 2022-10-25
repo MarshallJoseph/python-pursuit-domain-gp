@@ -13,20 +13,11 @@ from deap import gp
 
 from array import *
 
-# terminals in the gp will execute as the routine runs, this will cause the predator
-# agent to move and rotate. each time the predator moves, one move will be consumed.
-
-# TURN RIGHT
-# if 0 < y < 1 && -1 < x < 0, then increase y, increase x
-# if 0 < y < 1 && 0 < x < 1, then decrease y, increase x
-# if -1 < y < 0 && 0 < x < 1, then decrease y, decrease x
-# if -1 < y < 0 && -1 < x < 0, then increase y, decrease x
-
-# TURN LEFT
-# if 0 < y < 1 && -1 < x < 0, then decrease y, decrease x
-# if 0 < y < 1 && 0 < x < 1, then increase y, decrease x
-# if -1 < y < 0 && 0 < x < 1, then increase y, increase x
-# if -1 < y < 0 && -1 < x < 0, then decrease y, increase x
+# TODO: Create movement for predator/prey and test their functionality
+# TODO: Create rotation for predator/prey and test their functionality
+# TODO: Create speed update function for predator and test their functionality
+# TODO: Add terminals/operators for GP tree
+# TODO: Test GP tree generation with DEAP
 
 
 class PreyAgent:
@@ -81,9 +72,37 @@ class PredPreySimulator:
         self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
 
-    # TODO: Create movement for predator/prey and test their functionality
-    # TODO: Add terminals/operators for GP tree
-    # TODO: Test GP tree generation with DEAP
+    def move_forward(self):
+        if self.moves < self.max_moves:
+            self.moves += 1  # increase number of moves by 1
+            # reset current cell in discrete overlay since we are going to move the pred
+            self.matrix[int(self.y_pos)][int(self.x_pos)] = 'OPEN'
+            next_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
+            next_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
+            # set new cell where pred is located to 'PRED'
+            self.matrix[int(next_y_pos)][int(next_x_pos)] = 'PRED'
+            self.x_pos = next_x_pos  # set pred to new x coordinate
+            self.y_pos = next_y_pos  # set pred to new y coordinate
+
+    def rotate(self, new_x_rot, new_y_rot):
+        # check conditions of new x rotation
+        if new_x_rot > 1:
+            new_x_rot = 1
+        elif new_x_rot < -1:
+            new_x_rot = -1
+        # check conditions of new y rotation
+        if new_y_rot > 1:
+            new_y_rot = 1
+        elif new_y_rot < -1:
+            new_y_rot = -1
+        # assign new x and y rotations
+        self.x_rot = new_x_rot
+        self.y_rot = new_y_rot
+
+    def set_speed(self, speed):
+        if speed > 0:
+            self.speed = min(speed, 1)
+
 
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
