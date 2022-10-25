@@ -16,6 +16,7 @@ from array import *
 
 # TODO: Create movement for predator/prey and test their functionality
 # TODO: Create rotation for predator/prey and test their functionality
+# TODO: Create sensing function for predator
 # TODO: Create speed update function for predator and test their functionality
 # TODO: Add terminals/operators for GP tree
 # TODO: Test GP tree generation with DEAP
@@ -42,6 +43,8 @@ class PreyAgent:
         self.x_rot = random.random() * 2 - 1  # x rotation of prey in 2-d space [-1, 1]
         self.y_rot = random.random() * 2 - 1  # y rotation of prey in 2-d space [-1, 1]
         self.speed = 0.7  # speed of prey
+
+    #  def move_forward(self):
 
 
 class PredPreySimulator:
