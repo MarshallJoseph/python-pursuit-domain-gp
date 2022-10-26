@@ -11,8 +11,6 @@ from deap import creator
 from deap import tools
 from deap import gp
 
-from array import *
-
 # TODO: Store moves/actions that predator takes
 # TODO: Create sensing function for predator
 # TODO: Create speed update function for predator and test their functionality
