@@ -128,6 +128,8 @@ class PredPreySimulator:
         if speed > 0:
             self.speed = min(speed, self.max_speed)
 
+    #  def sense_prey(self):
+
 
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
