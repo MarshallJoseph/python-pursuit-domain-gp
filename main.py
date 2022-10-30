@@ -11,6 +11,7 @@ from deap import creator
 from deap import tools
 from deap import gp
 
+
 # TODO: Store moves/actions that predator takes
 # TODO: Create sensing function for predator
 # TODO: Create speed update function for predator and test their functionality
@@ -74,6 +75,7 @@ class PredPreySimulator:
         self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
         self.max_speed = 1  # max speed of predator
+        self.vision_radius = 90  # degrees in front of predator that can be seen
         # * Initialize Prey *
         self.prey = [PreyAgent(self.width, self.height) for _ in range(self.num_prey)]
         self.print_pred_properties()
@@ -128,7 +130,11 @@ class PredPreySimulator:
         if speed > 0:
             self.speed = min(speed, self.max_speed)
 
-    #  def sense_prey(self):
+    def seek_prey(self):
+        print("hi")
+
+    def sense_prey(self):
+        print("hi")
 
 
 # Initialize simulation with 5000 steps
