@@ -143,6 +143,10 @@ sim.move_forward()
 print("*** *** *** *** *** *** *** *** *** ***")
 sim.print_pred_properties()
 sim.print_prey_properties()
+# print(str(np.cross((3, 13.5, 0), (17, 16.5, 0))))
+# print(str(np.cross((17, 16.5, 0), (13.5, 3, 0))))
+# print(str(np.dot((-1, -1, 0), (0.5, 0.5, 0))))
+
 
 
 def main():
