@@ -176,7 +176,7 @@ class PredPreySimulator:
             # check if position of prey is within the viewing zone
             elif np.sign(a[2]) == np.sign(b[2]):
                 print(str(np.sign(a[2])) + ", " + str(np.sign(b[2])))
-                print("Prey x_pos = " + str(p.x_pos) + ", y_pos = " + str(p.y_pos))
+                print("within vision " + str(p.x_pos) + ", " + str(p.y_pos))
                 return True
             else:
                 continue
@@ -199,6 +199,7 @@ sim.print_pred_properties()
 sim.print_prey_properties()
 sim.seek_prey()
 sim.sense_prey()
+
 
 def main():
     random.seed(1)
