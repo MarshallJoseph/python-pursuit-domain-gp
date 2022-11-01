@@ -13,8 +13,6 @@ from deap import gp
 
 
 # TODO: Store moves/actions that predator takes
-# TODO: Create sensing function for predator
-# TODO: Create speed update function for predator and test their functionality
 # TODO: Add terminals/operators for GP tree
 # TODO: Test GP tree generation with DEAP
 
