@@ -62,7 +62,7 @@ class PredPreySimulator:
         # * Environment Properties *
         self.width = 200  # number of rows in discrete environment overlay, default 201
         self.height = 200  # number of columns in discrete environment overlay, default 201
-        self.num_prey = 15  # number of prey, default 15
+        self.num_prey = 20  # number of prey, default 15
         # * Simulation Properties *
         self.max_moves = max_steps  # limit of steps per pred/prey per simulation loop
         self.moves = 0  # number of steps that have been executed
@@ -71,10 +71,8 @@ class PredPreySimulator:
         # * Initialize Predator *
         self.x_pos = self.width / 2  # x coordinate of predator in 2-d space
         self.y_pos = self.height / 2  # y coordinate of predator in 2-d space
-        #self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
-        self.x_rot = 0.5  # x rotation of predator in 2-d space [-1, 1]
-        #self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
-        self.y_rot = 0.5# y rotation of predator in 2-d space [-1, 1]
+        self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
+        self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
         self.max_speed = 1  # max speed of predator
         self.vision_angle = 90  # degrees in front of predator that can be seen
@@ -132,7 +130,6 @@ class PredPreySimulator:
             self.speed = min(speed, self.max_speed)
 
     def seek_prey(self):
-        prey_in_view = None
         for p in self.prey:
             u_x = p.x_pos - self.x_pos
             u_y = p.y_pos - self.y_pos
@@ -140,45 +137,58 @@ class PredPreySimulator:
             e2_angle = None
 
             if self.x_rot >= 0 and self.y_rot >= 0:
-                x_rot = np.radians(np.abs(self.x_rot))
-                y_rot = np.radians(np.abs(self.y_rot))
-                e1_angle = np.degrees(np.arctan(y_rot / x_rot)) + self.vision_angle / 2
-                e2_angle = np.degrees(np.arctan(y_rot / x_rot)) - self.vision_angle / 2
+                x_rot = np.abs(self.x_rot)
+                y_rot = np.abs(self.y_rot)
+                e1_angle = np.arctan(y_rot / x_rot) + np.radians(self.vision_angle / 2)
+                e2_angle = np.arctan(y_rot / x_rot) - np.radians(self.vision_angle / 2)
             elif self.x_rot < 0 and self.y_rot >= 0:
-                x_rot = np.radians(np.abs(self.x_rot))
-                y_rot = np.radians(np.abs(self.y_rot))
-                e1_angle = np.degrees(np.arctan(y_rot / x_rot)) + (self.vision_angle / 2) + 90
-                e2_angle = np.degrees(np.arctan(y_rot / x_rot)) - (self.vision_angle / 2) + 90
+                x_rot = np.abs(self.x_rot)
+                y_rot = np.abs(self.y_rot)
+                e1_angle = np.arctan(y_rot / x_rot) + np.radians((self.vision_angle / 2) + np.radians(90))
+                e2_angle = np.arctan(y_rot / x_rot) - np.radians((self.vision_angle / 2) + np.radians(90))
             elif self.x_rot < 0 and self.y_rot < 0:
-                x_rot = np.radians(np.abs(self.x_rot))
-                y_rot = np.radians(np.abs(self.y_rot))
-                e1_angle = np.degrees(np.arctan(y_rot / x_rot)) + (self.vision_angle / 2) + 180  # 90 / 2 = 45
-                e2_angle = np.degrees(np.arctan(y_rot / x_rot)) - (self.vision_angle / 2) + 180  # 90 / 2 = 45
+                x_rot = np.abs(self.x_rot)
+                y_rot = np.abs(self.y_rot)
+                e1_angle = np.arctan(y_rot / x_rot) + np.radians((self.vision_angle / 2) + np.radians(180))
+                e2_angle = np.arctan(y_rot / x_rot) - np.radians((self.vision_angle / 2) + np.radians(180))
             elif self.x_rot >= 0 and self.y_rot < 0:
-                x_rot = np.radians(np.abs(self.x_rot))
-                y_rot = np.radians(np.abs(self.y_rot))
-                e1_angle = np.degrees(np.arctan(y_rot / x_rot)) + (self.vision_angle / 2) + 270  # 90 / 2 = 45
-                e2_angle = np.degrees(np.arctan(y_rot / x_rot)) - (self.vision_angle / 2) + 270  # 90 / 2 = 45
+                x_rot = np.abs(self.x_rot)
+                y_rot = np.abs(self.y_rot)
+                e1_angle = np.arctan(y_rot / x_rot) + np.radians((self.vision_angle / 2) + np.radians(270))
+                e2_angle = np.arctan(y_rot / x_rot) - np.radians((self.vision_angle / 2) + np.radians(270))
 
-            e1_x = self.vision_radius * np.cos(np.radians(e1_angle)) + self.x_pos
-            e1_y = self.vision_radius * np.sin(np.radians(e1_angle)) + self.y_pos
-            e2_x = self.vision_radius * np.cos(np.radians(e2_angle)) + self.x_pos
-            e2_y = self.vision_radius * np.sin(np.radians(e2_angle)) + self.y_pos
+            # calculate edge vectors of vision zone
+            e1_x = self.vision_radius * np.cos(e1_angle) + self.x_pos
+            e1_y = self.vision_radius * np.sin(e1_angle) + self.y_pos
+            e2_x = self.vision_radius * np.cos(e2_angle) + self.x_pos
+            e2_y = self.vision_radius * np.sin(e2_angle) + self.y_pos
+
+            # calculate cross product between edge vectors and circle point to prey vector
+            a = np.cross((e1_x, e1_y, 0), (u_x, u_y, 0))
+            b = np.cross((u_x, u_y, 0), (e2_x, e2_y, 0))
 
             # check if position of prey is behind predator
-            if np.dot((u_x, u_y), (self.x_rot, self.y_rot)) <= 0 and not prey_in_view:
-                prey_in_view = False
+            if np.dot((u_x, u_y), (self.x_rot, self.y_rot)) <= 0:
+                continue
             # check if position of prey is beyond the viewing distance
-            elif np.dot((u_x, u_y), (u_x, u_y)) > np.power(self.vision_radius, 2) and not prey_in_view:
-                prey_in_view = False
+            elif np.dot((u_x, u_y), (u_x, u_y)) > np.power(self.vision_radius, 2):
+                continue
             # check if position of prey is within the viewing zone
-            elif np.sign(np.cross((e1_x, e1_y, 0), (u_x, u_y, 0))).all() == np.sign(np.cross((u_x, u_y, 0), (e2_x, e2_y, 0))).all():
+            elif np.sign(a[2]) == np.sign(b[2]):
+                print(str(np.sign(a[2])) + ", " + str(np.sign(b[2])))
                 print("Prey x_pos = " + str(p.x_pos) + ", y_pos = " + str(p.y_pos))
-                prey_in_view = True
-        return prey_in_view
+                return True
+            else:
+                continue
 
     def sense_prey(self):
-        print("hi")
+        for p in self.prey:
+            point1 = np.array((self.x_pos, self.y_pos))
+            point2 = np.array((p.x_pos, p.y_pos))
+            dist = np.linalg.norm(point1 - point2)
+            if dist < self.vision_radius:
+                print("within radius = " + str(p.x_pos) + ", " + str(p.y_pos))
+                return True
 
 
 # Initialize simulation with 5000 steps
@@ -187,10 +197,8 @@ sim = PredPreySimulator(5000)
 print("*** *** *** *** *** *** *** *** *** ***")
 sim.print_pred_properties()
 sim.print_prey_properties()
-# print(str(np.cross((3, 13.5, 0), (17, 16.5, 0))))
-# print(str(np.cross((17, 16.5, 0), (13.5, 3, 0))))
-# print(str(np.dot((-1, -1, 0), (0.5, 0.5, 0))))
-print(str(sim.seek_prey()))
+sim.seek_prey()
+sim.sense_prey()
 
 def main():
     random.seed(1)
