@@ -12,7 +12,6 @@ from deap import tools
 from deap import gp
 
 
-# TODO: Add terminals/operators for GP tree
 # TODO: Test GP tree generation with DEAP
 
 
@@ -27,6 +26,18 @@ def prog2(out1, out2):
 
 def prog3(out1, out2, out3):
     return partial(progn, out1, out2, out3)
+
+
+def if_then_else(condition, out1, out2):
+    out1() if condition() else out2()
+
+
+def max_xy(x, y):
+    return max(x, y)
+
+
+def min_xy(x, y):
+    return min(x, y)
 
 
 class PreyAgent:
@@ -62,20 +73,38 @@ class PredPreySimulator:
         self.num_prey = 20  # number of prey, default 15
         # * Simulation Properties *
         self.max_moves = max_steps  # limit of steps per pred/prey per simulation loop
-        self.moves = 0  # number of steps that have been executed
-        self.captured = 0  # number of prey captured by predator
-        self.routine = None
-        # * Initialize Predator *
-        self.x_pos = self.width / 2  # x coordinate of predator in 2-d space
-        self.y_pos = self.height / 2  # y coordinate of predator in 2-d space
-        self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
-        self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
-        self.speed = 1  # speed of predator
         self.max_speed = 1.5  # max speed of predator
         self.vision_angle = 90  # degrees in front of predator that can be seen
         self.vision_radius = 20  # distance in front of predator that can be seen
         self.sensing_radius = 5  # distance around predator that can be sensed for prey
         self.capture_radius = 1  # distance around the predator that allows predator to capture prey
+        self.moves = None     # number of steps that have been executed
+        self.captured = None  # number of prey captured by predator
+        self.routine = None
+        self.x_pos = None  # x coordinate of predator in 2-d space
+        self.y_pos = None  # y coordinate of predator in 2-d space
+        self.x_rot = None  # x rotation of predator in 2-d space [-1, 1]
+        self.y_rot = None  # y rotation of predator in 2-d space [-1, 1]
+        self.speed = None  # speed of predator
+        # * Initialize Prey *
+        self.prey = None
+        # * Initialize Data *
+        self.steps = None
+
+    def run(self, routine):
+        self.reset_environment()
+        while self.moves < self.max_moves:
+            routine()
+
+    def reset_environment(self):
+        # Predator Properties
+        self.moves = 0  # number of steps that have been executed
+        self.captured = 0  # number of prey captured by predator
+        self.x_pos = self.width / 2  # x coordinate of predator in 2-d space
+        self.y_pos = self.height / 2  # y coordinate of predator in 2-d space
+        self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
+        self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
+        self.speed = 1  # speed of predator
         # * Initialize Prey *
         self.prey = [PreyAgent(self.width, self.height) for _ in range(self.num_prey)]
         # * Initialize Data *
@@ -90,14 +119,6 @@ class PredPreySimulator:
     def print_pred_properties(self):
         print("Pred: x_pos = " + str(round(self.x_pos, 2)) + ", y_pos = " + str(round(self.y_pos, 2)) +
               ", x_rot = " + str(round(self.x_rot, 2)) + ", y_rot = " + str(round(self.y_rot, 2)))
-
-    def reset_environment(self):
-        # Predator Properties
-        self.x_pos = 100  # x coordinate of predator in 2-d space
-        self.y_pos = 100  # y coordinate of predator in 2-d space
-        self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
-        self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
-        self.speed = 1  # speed of predator
 
     def move_forward(self):
         if self.moves < self.max_moves:
@@ -208,6 +229,24 @@ class PredPreySimulator:
             if dist < self.sensing_radius:
                 # print("within radius = " + str(p.x_pos) + ", " + str(p.y_pos))
                 return True
+
+    def moves(self):
+        return self.moves
+
+    def captured(self):
+        return self.captured
+
+    def x_pos(self):
+        return self.x_pos
+
+    def y_pos(self):
+        return self.y_pos
+
+    def x_rot(self):
+        return self.x_rot
+
+    def y_rot(self):
+        return self.y_rot
 
 
 # Initialize simulation with 5000 steps
