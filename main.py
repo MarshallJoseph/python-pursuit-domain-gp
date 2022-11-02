@@ -12,7 +12,6 @@ from deap import tools
 from deap import gp
 
 
-# TODO: Store moves/actions that predator takes
 # TODO: Add terminals/operators for GP tree
 # TODO: Test GP tree generation with DEAP
 
@@ -72,11 +71,16 @@ class PredPreySimulator:
         self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
         self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
         self.speed = 1  # speed of predator
-        self.max_speed = 1  # max speed of predator
+        self.max_speed = 1.5  # max speed of predator
         self.vision_angle = 90  # degrees in front of predator that can be seen
         self.vision_radius = 20  # distance in front of predator that can be seen
+        self.sensing_radius = 5  # distance around predator that can be sensed for prey
+        self.capture_radius = 1  # distance around the predator that allows predator to capture prey
         # * Initialize Prey *
         self.prey = [PreyAgent(self.width, self.height) for _ in range(self.num_prey)]
+        # * Initialize Data *
+        self.steps = []
+        self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
 
     def print_prey_properties(self):
         for i, p in enumerate(self.prey):
@@ -103,8 +107,16 @@ class PredPreySimulator:
             if 0 < new_x_pos < self.width and 0 < new_y_pos < self.height:
                 self.x_pos = new_x_pos  # set pred to new x coordinate
                 self.y_pos = new_y_pos  # set pred to new y coordinate
+                self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
             # * Prey Movement *
             for i, p in enumerate(self.prey):
+                point1 = np.array((self.x_pos, self.y_pos))
+                point2 = np.array((p.x_pos, p.y_pos))
+                dist = np.linalg.norm(point1 - point2)
+                if dist < self.capture_radius:
+                    self.steps.append("CAPTURE X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
+                    self.captured += 1
+                    del self.prey[i]
                 p.move_forward()  # move the prey randomly
 
     def rotate(self, new_x_rot, new_y_rot):
@@ -126,6 +138,15 @@ class PredPreySimulator:
         # check if 0 < speed < 1 before assigning
         if speed > 0:
             self.speed = min(speed, self.max_speed)
+
+    # Checks if next step predator takes hits a wall
+    def hit_wall(self):
+        new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
+        new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
+        if not 0 < new_x_pos < self.width or not 0 < new_y_pos < self.height:
+            return True
+        else:
+            return False
 
     def seek_prey(self):
         for p in self.prey:
@@ -173,8 +194,8 @@ class PredPreySimulator:
                 continue
             # check if position of prey is within the viewing zone
             elif np.sign(a[2]) == np.sign(b[2]):
-                print(str(np.sign(a[2])) + ", " + str(np.sign(b[2])))
-                print("within vision " + str(p.x_pos) + ", " + str(p.y_pos))
+                # print(str(np.sign(a[2])) + ", " + str(np.sign(b[2])))
+                # print("within vision " + str(p.x_pos) + ", " + str(p.y_pos))
                 return True
             else:
                 continue
@@ -184,19 +205,19 @@ class PredPreySimulator:
             point1 = np.array((self.x_pos, self.y_pos))
             point2 = np.array((p.x_pos, p.y_pos))
             dist = np.linalg.norm(point1 - point2)
-            if dist < self.vision_radius:
-                print("within radius = " + str(p.x_pos) + ", " + str(p.y_pos))
+            if dist < self.sensing_radius:
+                # print("within radius = " + str(p.x_pos) + ", " + str(p.y_pos))
                 return True
 
 
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
 # sim.move_forward()
-print("*** *** *** *** *** *** *** *** *** ***")
-sim.print_pred_properties()
-sim.print_prey_properties()
-sim.seek_prey()
-sim.sense_prey()
+# print("*** *** *** *** *** *** *** *** *** ***")
+# sim.print_pred_properties()
+# sim.print_prey_properties()
+# sim.seek_prey()
+# sim.sense_prey()
 
 
 def main():
