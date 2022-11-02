@@ -67,7 +67,6 @@ class PreyAgent:
         if 0 < new_x_pos < self.width and 0 < new_y_pos < self.height:
             self.x_pos = new_x_pos  # set prey to new x coordinate
             self.y_pos = new_y_pos  # set prey to new y coordinate
-        self.rotate()  # rotate in random direction before taking step forward
 
     def rotate(self):
         self.x_rot = random.random() * 2 - 1  # x rotation of prey in 2-d space [-1, 1]
@@ -149,7 +148,7 @@ class PredPreySimulator:
                     self.steps.append("CAPTURE X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
                     self.captured += 1
                     del self.prey[i]
-                p.move_forward()  # move the prey randomly
+                p.move_forward()  # move the prey if not in capture radius of predator
 
     def increase_speed(self):
         if self.speed < self.max_speed:
@@ -181,7 +180,7 @@ class PredPreySimulator:
         if speed > 0:
             self.speed = min(speed, self.max_speed)
 
-    # Checks if next step predator takes hits a wall
+    # deprecated
     def hit_wall(self):
         new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
         new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
