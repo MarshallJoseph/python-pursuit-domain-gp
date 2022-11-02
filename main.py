@@ -1,6 +1,7 @@
 import copy
 import random
 
+import numpy
 import numpy as np
 
 from functools import partial
@@ -276,6 +277,9 @@ class PredPreySimulator:
             else:
                 continue
 
+    def if_seek_prey(self, out1, out2):
+        return partial(if_then_else, self.seek_prey, out1, out2)
+
     # Checks if prey is in sensing radius of predator
     def sense_prey(self):
         for p in self.prey:
@@ -285,6 +289,9 @@ class PredPreySimulator:
             if dist < self.sensing_radius:
                 # print("within radius = " + str(p.x_pos) + ", " + str(p.y_pos))
                 return True
+
+    def if_sense_prey(self, out1, out2):
+        return partial(if_then_else, self.sense_prey, out1, out2)
 
     # deprecated
     def moves(self):
@@ -311,22 +318,64 @@ class PredPreySimulator:
         return self.y_rot
 
 
-
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
 
+primitive_set = gp.PrimitiveSet("MAIN", 0)
 
-# sim.move_forward()
-# print("*** *** *** *** *** *** *** *** *** ***")
-# sim.print_pred_properties()
-# sim.print_prey_properties()
-# sim.seek_prey()
-# sim.sense_prey()
+primitive_set.addPrimitive(sim.if_seek_prey, 2)
+primitive_set.addPrimitive(sim.if_sense_prey, 2)
+primitive_set.addPrimitive(prog2, 2)
+primitive_set.addPrimitive(prog3, 3)
+
+primitive_set.addTerminal(sim.move_forward)
+primitive_set.addTerminal(sim.turn_left)
+primitive_set.addTerminal(sim.turn_right)
+primitive_set.addTerminal(sim.increase_speed)
+primitive_set.addTerminal(sim.decrease_speed)
+
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
+
+toolbox = base.Toolbox()
+
+# Attribute generator
+toolbox.register("expr_init", gp.genFull, pset=primitive_set, min_=1, max_=2)
+
+# Structure generator
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+
+def eval_simulation(individual):
+    # Transform the tree expression into functional Python code
+    routine = gp.compile(individual, primitive_set)
+    # Run the generated routine
+    sim.run(routine)
+    return sim.captured
+
+
+toolbox.register("evaluate", eval_simulation)
+toolbox.register("select", tools.selTournament, tournsize=7)
+toolbox.register("mate", gp.cxOnePoint)
+toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
+toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=primitive_set)
 
 
 def main():
     random.seed(1)
 
+    pop = toolbox.population(1000)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", numpy.mean)
+    stats.register("std", numpy.std)
+    stats.register("min", numpy.min)
+    stats.register("max", numpy.max)
+
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 100, stats, halloffame=hof)
+
+    return pop, hof, stats
 
 if __name__ == "__main__":
     main()
