@@ -112,8 +112,8 @@ class PredPreySimulator:
         self.captured = 0  # number of prey captured by predator
         self.x_pos = self.width / 2  # x coordinate of predator in 2-d space
         self.y_pos = self.height / 2  # y coordinate of predator in 2-d space
-        self.x_rot = random.random() * 2 - 1  # x rotation of predator in 2-d space [-1, 1]
-        self.y_rot = random.random() * 2 - 1  # y rotation of predator in 2-d space [-1, 1]
+        self.x_rot = 0
+        self.y_rot = 0
         self.speed = 1  # speed of predator
         # * Initialize Prey *
         self.prey = [PreyAgent(self.width, self.height) for _ in range(self.num_prey)]
@@ -151,12 +151,46 @@ class PredPreySimulator:
                 p.move_forward()  # move the prey if not in capture radius of predator
 
     def increase_speed(self):
-        if self.speed < self.max_speed:
+        if self.speed < self.max_speed and self.moves < self.max_moves:
+            self.moves += 1
             self.speed += 0.10
 
     def decrease_speed(self):
-        if self.speed > self.min_speed:
+        if self.speed > self.min_speed and self.moves < self.max_moves:
+            self.moves += 1
             self.speed -= 0.10
+
+    def turn_left(self):
+        if self.moves < self.max_moves:
+            self.moves += 1
+            if self.x_rot >= 0 and self.y_rot >= 0:
+                self.x_rot -= 0.10
+                self.y_rot += 0.10
+            elif self.x_rot < 0 and self.y_rot >= 0:
+                self.x_rot -= 0.10
+                self.y_rot -= 0.10
+            elif self.x_rot < 0 and self.y_rot < 0:
+                self.x_rot += 0.10
+                self.y_rot -= 0.10
+            elif self.x_rot >= 0 and self.y_rot < 0:
+                self.x_rot += 0.10
+                self.y_rot += 0.10
+
+    def turn_right(self):
+        if self.moves < self.max_moves:
+            self.moves += 1
+            if self.x_rot >= 0 and self.y_rot >= 0:
+                self.x_rot += 0.10
+                self.y_rot -= 0.10
+            elif self.x_rot < 0 and self.y_rot >= 0:
+                self.x_rot += 0.10
+                self.y_rot += 0.10
+            elif self.x_rot < 0 and self.y_rot < 0:
+                self.x_rot -= 0.10
+                self.y_rot += 0.10
+            elif self.x_rot >= 0 and self.y_rot < 0:
+                self.x_rot -= 0.10
+                self.y_rot -= 0.10
 
     # deprecated
     def rotate(self, new_x_rot, new_y_rot):
@@ -277,7 +311,6 @@ class PredPreySimulator:
         return self.y_rot
 
 
-pset = gp.PrimitiveSetTyped("MAIN")
 
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
