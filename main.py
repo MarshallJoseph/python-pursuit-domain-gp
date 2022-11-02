@@ -32,12 +32,22 @@ def if_then_else(condition, out1, out2):
     out1() if condition() else out2()
 
 
+# deprecated
 def max_xy(x, y):
     return max(x, y)
 
 
+# deprecated
 def min_xy(x, y):
     return min(x, y)
+
+
+# deprecated
+def protected_div(left, right):
+    try:
+        return left / right
+    except ZeroDivisionError:
+        return 1
 
 
 class PreyAgent:
@@ -74,11 +84,12 @@ class PredPreySimulator:
         # * Simulation Properties *
         self.max_moves = max_steps  # limit of steps per pred/prey per simulation loop
         self.max_speed = 1.5  # max speed of predator
+        self.min_speed = 0.1  # min speed of predator
         self.vision_angle = 90  # degrees in front of predator that can be seen
         self.vision_radius = 20  # distance in front of predator that can be seen
         self.sensing_radius = 5  # distance around predator that can be sensed for prey
         self.capture_radius = 1  # distance around the predator that allows predator to capture prey
-        self.moves = None     # number of steps that have been executed
+        self.moves = None  # number of steps that have been executed
         self.captured = None  # number of prey captured by predator
         self.routine = None
         self.x_pos = None  # x coordinate of predator in 2-d space
@@ -140,6 +151,15 @@ class PredPreySimulator:
                     del self.prey[i]
                 p.move_forward()  # move the prey randomly
 
+    def increase_speed(self):
+        if self.speed < self.max_speed:
+            self.speed += 0.10
+
+    def decrease_speed(self):
+        if self.speed > self.min_speed:
+            self.speed -= 0.10
+
+    # deprecated
     def rotate(self, new_x_rot, new_y_rot):
         # check conditions of new x rotation
         if new_x_rot > 1:
@@ -155,6 +175,7 @@ class PredPreySimulator:
         self.x_rot = new_x_rot
         self.y_rot = new_y_rot
 
+    # deprecated
     def set_speed(self, speed):
         # check if 0 < speed < 1 before assigning
         if speed > 0:
@@ -169,6 +190,7 @@ class PredPreySimulator:
         else:
             return False
 
+    # Checks if prey is in vision of predator
     def seek_prey(self):
         for p in self.prey:
             u_x = p.x_pos - self.x_pos
@@ -221,6 +243,7 @@ class PredPreySimulator:
             else:
                 continue
 
+    # Checks if prey is in sensing radius of predator
     def sense_prey(self):
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))
@@ -230,27 +253,37 @@ class PredPreySimulator:
                 # print("within radius = " + str(p.x_pos) + ", " + str(p.y_pos))
                 return True
 
+    # deprecated
     def moves(self):
         return self.moves
 
+    # deprecated
     def captured(self):
         return self.captured
 
+    # deprecated
     def x_pos(self):
         return self.x_pos
 
+    # deprecated
     def y_pos(self):
         return self.y_pos
 
+    # deprecated
     def x_rot(self):
         return self.x_rot
 
+    # deprecated
     def y_rot(self):
         return self.y_rot
 
 
+pset = gp.PrimitiveSetTyped("MAIN")
+
 # Initialize simulation with 5000 steps
 sim = PredPreySimulator(5000)
+
+
 # sim.move_forward()
 # print("*** *** *** *** *** *** *** *** *** ***")
 # sim.print_pred_properties()
