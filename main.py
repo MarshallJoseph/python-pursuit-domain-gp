@@ -1,4 +1,5 @@
 import copy
+import operator
 import random
 
 import numpy
@@ -68,6 +69,7 @@ class PreyAgent:
         if 0 < new_x_pos < self.width and 0 < new_y_pos < self.height:
             self.x_pos = new_x_pos  # set prey to new x coordinate
             self.y_pos = new_y_pos  # set prey to new y coordinate
+        self.rotate()
 
     def rotate(self):
         self.x_rot = random.random() * 2 - 1  # x rotation of prey in 2-d space [-1, 1]
@@ -152,14 +154,16 @@ class PredPreySimulator:
                 p.move_forward()  # move the prey if not in capture radius of predator
 
     def increase_speed(self):
-        if self.speed < self.max_speed and self.moves < self.max_moves:
+        if self.moves < self.max_moves:
             self.moves += 1
-            self.speed += 0.10
+            if self.speed < self.max_speed:
+                self.speed += 0.10
 
     def decrease_speed(self):
-        if self.speed > self.min_speed and self.moves < self.max_moves:
+        if self.moves < self.max_moves:
             self.moves += 1
-            self.speed -= 0.10
+            if self.speed > self.min_speed:
+                self.speed -= 0.10
 
     def turn_left(self):
         if self.moves < self.max_moves:
@@ -235,21 +239,25 @@ class PredPreySimulator:
             if self.x_rot >= 0 and self.y_rot >= 0:
                 x_rot = np.abs(self.x_rot)
                 y_rot = np.abs(self.y_rot)
+                print("x_rot = " + str(x_rot) + ", y_rot = " + str(y_rot))
                 e1_angle = np.arctan(y_rot / x_rot) + np.radians(self.vision_angle / 2)
                 e2_angle = np.arctan(y_rot / x_rot) - np.radians(self.vision_angle / 2)
             elif self.x_rot < 0 and self.y_rot >= 0:
                 x_rot = np.abs(self.x_rot)
                 y_rot = np.abs(self.y_rot)
+                #print("x_rot = " + str(x_rot) + ", y_rot = " + str(y_rot))
                 e1_angle = np.arctan(y_rot / x_rot) + np.radians((self.vision_angle / 2) + np.radians(90))
                 e2_angle = np.arctan(y_rot / x_rot) - np.radians((self.vision_angle / 2) + np.radians(90))
             elif self.x_rot < 0 and self.y_rot < 0:
                 x_rot = np.abs(self.x_rot)
                 y_rot = np.abs(self.y_rot)
+                #print("x_rot = " + str(x_rot) + ", y_rot = " + str(y_rot))
                 e1_angle = np.arctan(y_rot / x_rot) + np.radians((self.vision_angle / 2) + np.radians(180))
                 e2_angle = np.arctan(y_rot / x_rot) - np.radians((self.vision_angle / 2) + np.radians(180))
             elif self.x_rot >= 0 and self.y_rot < 0:
                 x_rot = np.abs(self.x_rot)
                 y_rot = np.abs(self.y_rot)
+                #print("x_rot = " + str(x_rot) + ", y_rot = " + str(y_rot))
                 e1_angle = np.arctan(y_rot / x_rot) + np.radians((self.vision_angle / 2) + np.radians(270))
                 e2_angle = np.arctan(y_rot / x_rot) - np.radians((self.vision_angle / 2) + np.radians(270))
 
@@ -323,7 +331,7 @@ sim = PredPreySimulator(5000)
 
 primitive_set = gp.PrimitiveSet("MAIN", 0)
 
-primitive_set.addPrimitive(sim.if_seek_prey, 2)
+#primitive_set.addPrimitive(sim.if_seek_prey, 2)
 primitive_set.addPrimitive(sim.if_sense_prey, 2)
 primitive_set.addPrimitive(prog2, 2)
 primitive_set.addPrimitive(prog3, 3)
@@ -352,20 +360,25 @@ def eval_simulation(individual):
     routine = gp.compile(individual, primitive_set)
     # Run the generated routine
     sim.run(routine)
-    return sim.captured
+    #print("routine started")
+    #print("captured = " + str(sim.captured))
+    return sim.captured,
 
 
 toolbox.register("evaluate", eval_simulation)
-toolbox.register("select", tools.selTournament, tournsize=7)
+toolbox.register("select", tools.selTournament, tournsize=3)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=primitive_set)
+
+toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=11))
+toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=11))
 
 
 def main():
     random.seed(1)
 
-    pop = toolbox.population(1000)
+    pop = toolbox.population(n=1000)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -373,7 +386,7 @@ def main():
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 100, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.9, 0.1, 100, stats, halloffame=hof)
 
     return pop, hof, stats
 
