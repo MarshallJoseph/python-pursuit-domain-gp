@@ -14,7 +14,7 @@ from deap import gp
 from pred_prey_simulator import PredPreySimulator
 
 
-# TODO: Test GP tree generation with DEAP
+# TODO: convert to strongly-typed gp
 
 
 def progn(*args):
