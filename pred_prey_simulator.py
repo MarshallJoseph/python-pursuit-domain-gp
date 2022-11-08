@@ -7,10 +7,6 @@ from functools import partial
 from prey_agent import PreyAgent
 
 
-def if_then_else(condition, out1, out2):
-    out1() if condition() else out2()
-
-
 class PredPreySimulator:
 
     def __init__(self, max_steps):
@@ -57,7 +53,7 @@ class PredPreySimulator:
         self.prey = [PreyAgent(self.width, self.height) for _ in range(self.num_prey)]
         # * Initialize Data *
         self.steps = []
-        self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
+        self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))  # predator starting position
 
     def print_prey_properties(self):
         for i, p in enumerate(self.prey):
@@ -68,7 +64,7 @@ class PredPreySimulator:
         print("Pred: x_pos = " + str(round(self.x_pos, 2)) + ", y_pos = " + str(round(self.y_pos, 2)) +
               ", x_rot = " + str(round(self.x_rot, 2)) + ", y_rot = " + str(round(self.y_rot, 2)))
 
-    def move_forward(self):
+    def move_forward(self, x):
         if self.moves < self.max_moves:
             self.moves += 1  # increase number of moves by 1
             new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
@@ -85,76 +81,34 @@ class PredPreySimulator:
                 if dist < self.capture_radius:
                     self.steps.append("CAPTURE X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
                     self.captured += 1
-                    del self.prey[i]
+                    del self.prey[i]  # delete prey from list after being captured
                 p.move_forward()  # move the prey if not in capture radius of predator
+        return x  # pass value through function without using it
 
-    def increase_speed(self):
-        if self.moves < self.max_moves:
-            self.moves += 1
-            if self.speed < self.max_speed:
-                self.speed += 0.10
-
-    def decrease_speed(self):
-        if self.moves < self.max_moves:
-            self.moves += 1
-            if self.speed > self.min_speed:
-                self.speed -= 0.10
-
-    def turn_left(self):
-        if self.moves < self.max_moves:
-            self.moves += 1
-            if self.x_rot >= 0 and self.y_rot >= 0:
-                self.x_rot -= 0.10
-                self.y_rot += 0.10
-            elif self.x_rot < 0 and self.y_rot >= 0:
-                self.x_rot -= 0.10
-                self.y_rot -= 0.10
-            elif self.x_rot < 0 and self.y_rot < 0:
-                self.x_rot += 0.10
-                self.y_rot -= 0.10
-            elif self.x_rot >= 0 and self.y_rot < 0:
-                self.x_rot += 0.10
-                self.y_rot += 0.10
-
-    def turn_right(self):
-        if self.moves < self.max_moves:
-            self.moves += 1
-            if self.x_rot >= 0 and self.y_rot >= 0:
-                self.x_rot += 0.10
-                self.y_rot -= 0.10
-            elif self.x_rot < 0 and self.y_rot >= 0:
-                self.x_rot += 0.10
-                self.y_rot += 0.10
-            elif self.x_rot < 0 and self.y_rot < 0:
-                self.x_rot -= 0.10
-                self.y_rot += 0.10
-            elif self.x_rot >= 0 and self.y_rot < 0:
-                self.x_rot -= 0.10
-                self.y_rot -= 0.10
-
-    # deprecated
-    def rotate(self, new_x_rot, new_y_rot):
-        # check conditions of new x rotation
-        if new_x_rot > 1:
-            new_x_rot = 1
-        elif new_x_rot < -1:
-            new_x_rot = -1
-        # check conditions of new y rotation
-        if new_y_rot > 1:
-            new_y_rot = 1
-        elif new_y_rot < -1:
-            new_y_rot = -1
-        # assign new x and y rotations
+    def rotate(self, x, y):
+        # check if we need to truncate number to left of decimal
+        if -1 <= x <= 1:
+            new_x_rot = x
+        else:
+            new_x_rot = x - int(x)
+        # check if we need to truncate number to left of decimal
+        if -1 <= y <= 1:
+            new_y_rot = y
+        else:
+            new_y_rot = y - int(y)
+        # assign new rotation values
         self.x_rot = new_x_rot
         self.y_rot = new_y_rot
+        # return average of rotation values as float
+        return np.average(self.x_rot, self.y_rot)
 
-    # deprecated
     def set_speed(self, speed):
         # check if 0 < speed < 1 before assigning
         if speed > 0:
             self.speed = min(speed, self.max_speed)
+        # return speed as float
+        return self.speed
 
-    # deprecated
     def hit_wall(self):
         new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
         new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
@@ -185,9 +139,6 @@ class PredPreySimulator:
                 continue
         return False
 
-    def if_seek_prey(self, out1, out2):
-        return partial(if_then_else, self.seek_prey, out1, out2)
-
     # Checks if prey is in sensing radius of predator
     def sense_prey(self):
         for p in self.prey:
@@ -196,30 +147,3 @@ class PredPreySimulator:
             dist = np.linalg.norm(point1 - point2)
             if dist <= self.sensing_radius:
                 return True
-
-    def if_sense_prey(self, out1, out2):
-        return partial(if_then_else, self.sense_prey, out1, out2)
-
-    # deprecated
-    def moves(self):
-        return self.moves
-
-    # deprecated
-    def captured(self):
-        return self.captured
-
-    # deprecated
-    def x_pos(self):
-        return self.x_pos
-
-    # deprecated
-    def y_pos(self):
-        return self.y_pos
-
-    # deprecated
-    def x_rot(self):
-        return self.x_rot
-
-    # deprecated
-    def y_rot(self):
-        return self.y_rot
