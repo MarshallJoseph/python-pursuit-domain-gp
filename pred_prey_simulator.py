@@ -32,8 +32,8 @@ class PredPreySimulator:
         self.x_rot = None  # x rotation of predator in 2-d space [-1, 1]
         self.y_rot = None  # y rotation of predator in 2-d space [-1, 1]
         self.speed = None  # speed of predator
-        self.primitives = None  # number of primitives in gp tree executed
-        self.has_moved = None  # checks if predator has moved during execution
+        self.primitives = 0  # number of primitives in gp tree executed
+        self.has_moved = False  # checks if predator has moved during execution
         # * Initialize Prey *
         self.prey = None
         # * Initialize Data *
@@ -206,6 +206,7 @@ class PredPreySimulator:
 
     def less_than(self, x, y):
         self.primitives += 1
+        print(str(x))
         if x < y:
             return 1
         else:

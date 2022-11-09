@@ -15,9 +15,6 @@ from deap import gp
 from pred_prey_simulator import PredPreySimulator
 
 
-
-
-
 sim = PredPreySimulator(5000)  # Initialize simulation with 5000 steps
 
 pset = gp.PrimitiveSet("MAIN", 0)  # Initialize primitive set called "MAIN" with 0 inputs
@@ -47,9 +44,47 @@ pset.addTerminal(1)  # boolean True converted to float
 pset.addTerminal(0)  # boolean False converted to float
 pset.addEphemeralConstant("ephemeral", lambda: random.uniform(-1, 1))
 
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
+
+toolbox = base.Toolbox()
+
+# Attribute generator
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)
+
+# Structure initializers
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+
+def evalPredPrey(individual):
+    # Transform the tree expression to functional Python code
+    routine = gp.compile(individual, pset)
+    # Run the generated routine
+    sim.run(routine)
+    return sim.captured,
+
+
+toolbox.register("evaluate", evalPredPrey)
+toolbox.register("select", tools.selTournament, tournsize=7)
+toolbox.register("mate", gp.cxOnePoint)
+toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
+toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
+
 
 def main():
     random.seed(1)
+    pop = toolbox.population(n=100)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
+
+    algorithms.eaSimple(pop, toolbox, 0.9, 0.1, 1000, stats, halloffame=hof)
+
+    return pop, hof, stats
 
 
 if __name__ == "__main__":
