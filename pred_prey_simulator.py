@@ -113,11 +113,10 @@ class PredPreySimulator:
         new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
         new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
         if not 0 < new_x_pos < self.width or not 0 < new_y_pos < self.height:
-            return True
+            return 1
         else:
-            return False
+            return 0
 
-    # Checks if prey is in vision of predator
     def seek_prey(self):
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))  # predator x, y position
@@ -134,16 +133,27 @@ class PredPreySimulator:
             dot_product = np.dot(pred_to_prey_rot_norm[0], pred_rot_norm[0])
             # Check if prey is in vision
             if dot_product >= self.vision_angle:
-                return True
-            else:
-                continue
-        return False
+                return 1
+        return 0
 
-    # Checks if prey is in sensing radius of predator
     def sense_prey(self):
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))
             point2 = np.array((p.x_pos, p.y_pos))
             dist = np.linalg.norm(point1 - point2)
             if dist <= self.sensing_radius:
-                return True
+                return 1
+        return 0
+
+    def prey_captured(self):
+        return self.captured / self.num_prey
+
+    def prey_remaining(self):
+        return (self.num_prey - self.captured) / self.num_prey
+
+    def moves_taken(self):
+        return self.moves / self.max_moves
+
+    def moves_remaining(self):
+        return (self.max_moves - self.moves) / self.max_moves
+
