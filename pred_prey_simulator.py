@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from sklearn.preprocessing import normalize
@@ -24,12 +26,14 @@ class PredPreySimulator:
         self.capture_radius = 1  # distance around the predator that allows predator to capture prey
         self.moves = None  # number of steps that have been executed
         self.captured = None  # number of prey captured by predator
-        self.routine = None
+        self.routine = None  # routine to be executed
         self.x_pos = None  # x coordinate of predator in 2-d space
         self.y_pos = None  # y coordinate of predator in 2-d space
         self.x_rot = None  # x rotation of predator in 2-d space [-1, 1]
         self.y_rot = None  # y rotation of predator in 2-d space [-1, 1]
         self.speed = None  # speed of predator
+        self.primitives = None  # number of primitives in gp tree executed
+        self.has_moved = None  # checks if predator has moved during execution
         # * Initialize Prey *
         self.prey = None
         # * Initialize Data *
@@ -39,6 +43,9 @@ class PredPreySimulator:
         self.reset_environment()
         while self.moves < self.max_moves:
             routine()
+            # If predator has executed 250 primitives (5% of max_steps) without moving, then terminate the predator
+            if self.primitives > 250 and not self.has_moved:
+                self.moves = self.max_moves
 
     def reset_environment(self):
         # Predator Properties
@@ -49,6 +56,8 @@ class PredPreySimulator:
         self.x_rot = 1
         self.y_rot = 0
         self.speed = 1  # speed of predator
+        self.primitives = 0
+        self.has_moved = False
         # * Initialize Prey *
         self.prey = [PreyAgent(self.width, self.height) for _ in range(self.num_prey)]
         # * Initialize Data *
@@ -67,6 +76,7 @@ class PredPreySimulator:
     def move_forward(self, x):
         if self.moves < self.max_moves:
             self.moves += 1  # increase number of moves by 1
+            self.has_moved = True  # proof predator has move_forward primitive in tree
             new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
             new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
             if 0 < new_x_pos < self.width and 0 < new_y_pos < self.height:
@@ -86,6 +96,7 @@ class PredPreySimulator:
         return x  # pass value through function without using it
 
     def rotate(self, x, y):
+        self.primitives += 1
         # check if we need to truncate number to left of decimal
         if -1 <= x <= 1:
             new_x_rot = x
@@ -103,6 +114,7 @@ class PredPreySimulator:
         return np.average(self.x_rot, self.y_rot)
 
     def set_speed(self, speed):
+        self.primitives += 1
         # check if 0 < speed < 1 before assigning
         if speed > 0:
             self.speed = min(speed, self.max_speed)
@@ -144,6 +156,87 @@ class PredPreySimulator:
             if dist <= self.sensing_radius:
                 return 1
         return 0
+
+    def min_xy(self, x, y):
+        self.primitives += 1
+        return np.min(x, y)
+
+    def max_xy(self, x, y):
+        self.primitives += 1
+        return np.max(x, y)
+
+    def safe_div(self, x, y):
+        self.primitives += 1
+        try:
+            return x / y
+        except ZeroDivisionError:
+            return 1
+
+    def average(self, x, y):
+        self.primitives += 1
+        return np.average(x, y)
+
+    def float_and(self, x, y):
+        self.primitives += 1
+        if x and y:
+            return 1
+        else:
+            return 0
+
+    def float_or(self, x, y):
+        self.primitives += 1
+        if x or y:
+            return 1
+        else:
+            return 0
+
+    def float_not(self, x):
+        self.primitives += 1
+        if x:
+            return 0
+        else:
+            return 1
+
+    def greater_than(self, x, y):
+        self.primitives += 1
+        if x > y:
+            return 1
+        else:
+            return 0
+
+    def less_than(self, x, y):
+        self.primitives += 1
+        if x < y:
+            return 1
+        else:
+            return 0
+
+    def equal_to(self, x, y):
+        self.primitives += 1
+        if x == y:
+            return 1
+        else:
+            return 0
+
+    def add(self, x, y):
+        self.primitives += 1
+        return x + y
+
+    def sub(self, x, y):
+        self.primitives += 1
+        return x - y
+
+    def mul(self, x, y):
+        self.primitives += 1
+        return x * y
+
+    def sin(self, x):
+        self.primitives += 1
+        return math.sin(x)
+
+    def cos(self, x):
+        self.primitives += 1
+        return math.cos(x)
 
     def prey_captured(self):
         return self.captured / self.num_prey
