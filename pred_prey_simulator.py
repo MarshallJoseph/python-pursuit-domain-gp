@@ -4,8 +4,6 @@ import numpy as np
 
 from sklearn.preprocessing import normalize
 
-from functools import partial
-
 from prey_agent import PreyAgent
 
 
@@ -24,20 +22,20 @@ class PredPreySimulator:
         self.vision_radius = 20  # distance in front of predator that can be seen
         self.sensing_radius = 5  # distance around predator that can be sensed for prey
         self.capture_radius = 1  # distance around the predator that allows predator to capture prey
-        self.moves = None  # number of steps that have been executed
-        self.captured = None  # number of prey captured by predator
+        self.moves = 0  # number of steps that have been executed
+        self.captured = 0  # number of prey captured by predator
         self.routine = None  # routine to be executed
-        self.x_pos = None  # x coordinate of predator in 2-d space
-        self.y_pos = None  # y coordinate of predator in 2-d space
-        self.x_rot = None  # x rotation of predator in 2-d space [-1, 1]
-        self.y_rot = None  # y rotation of predator in 2-d space [-1, 1]
-        self.speed = None  # speed of predator
+        self.x_pos = self.width / 2  # x coordinate of predator in 2-d space
+        self.y_pos = self.height / 2  # y coordinate of predator in 2-d space
+        self.x_rot = 1  # x rotation of predator in 2-d space [-1, 1]
+        self.y_rot = 0  # y rotation of predator in 2-d space [-1, 1]
+        self.speed = 1  # speed of predator
         self.primitives = 0  # number of primitives in gp tree executed
         self.has_moved = False  # checks if predator has moved during execution
         # * Initialize Prey *
-        self.prey = None
+        self.prey = []
         # * Initialize Data *
-        self.steps = None
+        self.steps = []
 
     def run(self, routine):
         self.reset_environment()
@@ -113,11 +111,11 @@ class PredPreySimulator:
         # return average of rotation values as float
         return np.average(self.x_rot, self.y_rot)
 
-    def set_speed(self, speed):
+    def set_speed(self, x):
         self.primitives += 1
         # check if 0 < speed < 1 before assigning
-        if speed > 0:
-            self.speed = min(speed, self.max_speed)
+        if x > 0:
+            self.speed = min(x, self.max_speed)
         # return speed as float
         return self.speed
 
@@ -125,9 +123,9 @@ class PredPreySimulator:
         new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
         new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
         if not 0 < new_x_pos < self.width or not 0 < new_y_pos < self.height:
-            return 1
+            return 1.0
         else:
-            return 0
+            return 0.0
 
     def seek_prey(self):
         for p in self.prey:
@@ -145,8 +143,8 @@ class PredPreySimulator:
             dot_product = np.dot(pred_to_prey_rot_norm[0], pred_rot_norm[0])
             # Check if prey is in vision
             if dot_product >= self.vision_angle:
-                return 1
-        return 0
+                return 1.0
+        return 0.0
 
     def sense_prey(self):
         for p in self.prey:
@@ -154,8 +152,8 @@ class PredPreySimulator:
             point2 = np.array((p.x_pos, p.y_pos))
             dist = np.linalg.norm(point1 - point2)
             if dist <= self.sensing_radius:
-                return 1
-        return 0
+                return 1.0
+        return 0.0
 
     def min_xy(self, x, y):
         self.primitives += 1
@@ -170,7 +168,7 @@ class PredPreySimulator:
         try:
             return x / y
         except ZeroDivisionError:
-            return 1
+            return 1.0
 
     def average(self, x, y):
         self.primitives += 1
@@ -179,45 +177,44 @@ class PredPreySimulator:
     def float_and(self, x, y):
         self.primitives += 1
         if x and y:
-            return 1
+            return 1.0
         else:
-            return 0
+            return 0.0
 
     def float_or(self, x, y):
         self.primitives += 1
         if x or y:
-            return 1
+            return 1.0
         else:
-            return 0
+            return 0.0
 
     def float_not(self, x):
         self.primitives += 1
         if x:
-            return 0
+            return 0.0
         else:
-            return 1
+            return 1.0
 
     def greater_than(self, x, y):
         self.primitives += 1
         if x > y:
-            return 1
+            return 1.0
         else:
-            return 0
+            return 0.0
 
     def less_than(self, x, y):
         self.primitives += 1
-        print(str(x))
         if x < y:
-            return 1
+            return 1.0
         else:
-            return 0
+            return 0.0
 
     def equal_to(self, x, y):
         self.primitives += 1
         if x == y:
-            return 1
+            return 1.0
         else:
-            return 0
+            return 0.0
 
     def add(self, x, y):
         self.primitives += 1
@@ -250,4 +247,3 @@ class PredPreySimulator:
 
     def moves_remaining(self):
         return (self.max_moves - self.moves) / self.max_moves
-

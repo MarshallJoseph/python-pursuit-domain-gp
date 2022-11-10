@@ -2,6 +2,7 @@ import math
 import operator
 import random
 
+import deap.gp
 import numpy as np
 
 from functools import partial
@@ -40,8 +41,8 @@ pset.addTerminal(sim.prey_captured)  # percent of prey captured
 pset.addTerminal(sim.prey_remaining)  # percent of prey remaining
 pset.addTerminal(sim.moves_taken)  # percent of moves taken
 pset.addTerminal(sim.moves_remaining)  # percent of moves remaining
-pset.addTerminal(1)  # boolean True converted to float
-pset.addTerminal(0)  # boolean False converted to float
+pset.addTerminal(1.0)  # boolean True converted to float
+pset.addTerminal(0.0)  # boolean False converted to float
 pset.addEphemeralConstant("ephemeral", lambda: random.uniform(-1, 1))
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -50,16 +51,21 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=3)
 
 # Structure initializers
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
+#x = gp.PrimitiveTree(toolbox.expr_init())
+#print(str(x))
+
 
 def evalPredPrey(individual):
     # Transform the tree expression to functional Python code
+    print(str(individual))
     routine = gp.compile(individual, pset)
+    print(str(routine))
     # Run the generated routine
     sim.run(routine)
     return sim.captured,
