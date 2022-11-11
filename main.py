@@ -51,7 +51,7 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=3)
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=2, max_=3)
 
 # Structure initializers
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
@@ -79,7 +79,7 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 
 def main():
-    random.seed(1)
+    random.seed(4)
     pop = toolbox.population(n=100)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
