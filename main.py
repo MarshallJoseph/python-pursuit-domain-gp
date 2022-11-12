@@ -62,9 +62,10 @@ toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.ex
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 #expr = gp.genFull(pset, min_=3, max_=3)
-#tree = gp.PrimitiveTree(expr)
+#tree_stuff = gp.PrimitiveTree(expr)
+#print(str(tree_stuff))
 
-tree = "sin(if_then_else(safe_div(prey_captured)(1.0))(safe_div(hit_wall)(moves_remaining))(move_forward(0.0)))"
+tree = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
 
 def evalPredPrey(individual):
     # Run the generated individual

@@ -40,13 +40,12 @@ class PredPreySimulator:
 
     def run(self, individual):
         self.reset_environment()
-        # move_forward(if_then_else(add(0.0, sense_prey), average(moves_taken, moves_taken), if_then_else(-0.8623077206043339, prey_remaining, 1.0)))
-        ind = "(" + str(individual).replace(", ", ")(") + ")"
-        print(ind)
-
-        t = Tree.fromstring(ind)
+        # sin(if_then_else(safe_div(prey_captured)(1.0))(safe_div(hit_wall)(moves_remaining))(move_forward(0.0)))
+        ind_tree = individual
+        ind_tree = str(ind_tree).replace(", ", ")(")
+        t = Tree.fromstring("(" + ind_tree + ")")
         t.pretty_print()
-
+        print(str(individual))
 
 
     def reset_environment(self):
