@@ -1,4 +1,5 @@
 import math
+import sys
 
 import numpy as np
 
@@ -7,6 +8,7 @@ from sklearn.preprocessing import normalize
 from prey_agent import PreyAgent
 
 from nltk import Tree
+
 
 class PredPreySimulator:
 
@@ -38,15 +40,24 @@ class PredPreySimulator:
         # * Initialize Data *
         self.steps = []
 
-    def run(self, individual):
+    def run(self, individual, pset):
         self.reset_environment()
         # sin(if_then_else(safe_div(prey_captured)(1.0))(safe_div(hit_wall)(moves_remaining))(move_forward(0.0)))
         ind_tree = individual
         ind_tree = str(ind_tree).replace(", ", ")(")
         t = Tree.fromstring("(" + ind_tree + ")")
         t.pretty_print()
-        print(str(individual))
 
+        code = str(individual)
+        if len(pset.arguments) > 0:
+            # This section is a stripped version of the lambdify function of SymPy 0.6.6.
+            args = ",".join(arg for arg in pset.arguments)
+            code = "lambda {args}: {code}".format(args=args, code=code)
+        try:
+            eval(code, pset.context, {})
+        except MemoryError:
+            _, _, traceback = sys.exc_info()
+            raise MemoryError("Python cannot evaluate a tree higher than 90.")
 
     def reset_environment(self):
         # Predator Properties
@@ -75,16 +86,14 @@ class PredPreySimulator:
               ", x_rot = " + str(round(self.x_rot, 2)) + ", y_rot = " + str(round(self.y_rot, 2)))
 
     def if_then_else(self, condition, x, y):
+        print("if_then_else")
         if condition:
-            if callable(x):
-                x = x()
             return x
         else:
-            if callable(y):
-                y = y()
             return y
 
     def move_forward(self, x):
+        print("move_forward")
         if self.moves < self.max_moves:
             self.moves += 1  # increase number of moves by 1
             self.has_moved = True  # proof predator has move_forward primitive in tree
@@ -107,6 +116,11 @@ class PredPreySimulator:
         return x  # pass value through function without using it
 
     def rotate(self, x, y):
+        print("rotate")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         # check if we need to truncate number to left of decimal
         if -1 <= x <= 1:
             new_x_rot = x
@@ -124,6 +138,9 @@ class PredPreySimulator:
         return np.average(self.x_rot, self.y_rot)
 
     def set_speed(self, x):
+        print("set_speed")
+        if callable(x):
+            x = x()
         # check if 0 < speed < 1 before assigning
         if x > 0:
             self.speed = min(x, self.max_speed)
@@ -131,6 +148,7 @@ class PredPreySimulator:
         return self.speed
 
     def hit_wall(self):
+        print("hit_wall")
         new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
         new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
         if not 0 < new_x_pos < self.width or not 0 < new_y_pos < self.height:
@@ -139,6 +157,7 @@ class PredPreySimulator:
             return 0.0
 
     def seek_prey(self):
+        print("seek_prey")
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))  # predator x, y position
             point2 = np.array((p.x_pos, p.y_pos))  # prey x, y position
@@ -158,6 +177,7 @@ class PredPreySimulator:
         return 0.0
 
     def sense_prey(self):
+        print("sense_prey")
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))
             point2 = np.array((p.x_pos, p.y_pos))
@@ -167,79 +187,152 @@ class PredPreySimulator:
         return 0.0
 
     def min_xy(self, x, y):
+        print("min_xy")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         return np.min(x, y)
 
     def max_xy(self, x, y):
+        print("max_xy")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         return np.max(x, y)
 
     def safe_div(self, x, y):
+        print("safe_div")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         try:
             return x / y
         except ZeroDivisionError:
             return 1.0
 
     def average(self, x, y):
+        print("average")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         return np.average(x, y)
 
     def float_and(self, x, y):
+        print("float_and")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         if x and y:
             return 1.0
         else:
             return 0.0
 
     def float_or(self, x, y):
+        print("float_or")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         if x or y:
             return 1.0
         else:
             return 0.0
 
     def float_not(self, x):
+        print("float_not")
+        if callable(x):
+            x = x()
         if x:
             return 0.0
         else:
             return 1.0
 
     def greater_than(self, x, y):
+        print("greater_than")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         if x > y:
             return 1.0
         else:
             return 0.0
 
     def less_than(self, x, y):
+        print("less_than")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         if x < y:
             return 1.0
         else:
             return 0.0
 
     def equal_to(self, x, y):
+        print("equal_to")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         if x == y:
             return 1.0
         else:
             return 0.0
 
     def add(self, x, y):
+        print("add")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         return x + y
 
     def sub(self, x, y):
+        print("sub")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         return x - y
 
     def mul(self, x, y):
+        print("mul")
+        if callable(x):
+            x = x()
+        if callable(y):
+            y = y()
         return x * y
 
     def sin(self, x):
+        print("sin")
+        if callable(x):
+            x = x()
         return math.sin(x)
 
     def cos(self, x):
+        print("cos")
+        if callable(x):
+            x = x()
         return math.cos(x)
 
     def prey_captured(self):
+        print("prey_captured")
         return self.captured / self.num_prey
 
     def prey_remaining(self):
+        print("prey_remaining")
         return (self.num_prey - self.captured) / self.num_prey
 
     def moves_taken(self):
+        print("moves_taken")
         return self.moves / self.max_moves
 
     def moves_remaining(self):
+        print("moves_remaining")
         return (self.max_moves - self.moves) / self.max_moves

@@ -61,19 +61,20 @@ toolbox.register("expr_init", gp.genFull, pset=pset, min_=2, max_=3)
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-#expr = gp.genFull(pset, min_=3, max_=3)
+#expr = gp.genFull(pset, min_=1, max_=3)
 #tree_stuff = gp.PrimitiveTree(expr)
 #print(str(tree_stuff))
 
 tree = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
 
-def evalPredPrey(individual):
+
+def eval_pred_prey(individual):
     # Run the generated individual
-    sim.run(individual)
+    sim.run(individual, pset)
     #return sim.captured,
 
 
-toolbox.register("evaluate", evalPredPrey)
+toolbox.register("evaluate", eval_pred_prey)
 toolbox.register("select", tools.selTournament, tournsize=7)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
@@ -82,7 +83,7 @@ toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
 def main():
     random.seed(1)
-    evalPredPrey(tree)
+    eval_pred_prey(tree)
 #    pop = toolbox.population(n=100)
 #    hof = tools.HallOfFame(1)
 #    stats = tools.Statistics(lambda ind: ind.fitness.values)
