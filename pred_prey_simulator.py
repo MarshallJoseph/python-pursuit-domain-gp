@@ -88,7 +88,8 @@ class PredPreySimulator:
         print("Callable: " + original + "\n")
 
         try:
-            eval(original)
+            z = eval(original)
+            print(z)
         except MemoryError:
             _, _, traceback = sys.exc_info()
             raise MemoryError("Python cannot evaluate a tree higher than 90.")
@@ -261,7 +262,7 @@ class PredPreySimulator:
             x = x()
         if callable(y):
             y = y()
-        return float(np.average(x, y))
+        return x + y / 2
 
     def float_and(self, x, y):
         print("float_and")
@@ -307,8 +308,6 @@ class PredPreySimulator:
 
     def less_than(self, x, y):
         print("less_than")
-        print("x = " + str(x))
-        print("y = " + str(y))
         if callable(x):
             x = x()
         if callable(y):
@@ -367,7 +366,7 @@ class PredPreySimulator:
 
     def prey_captured(self):
         print("prey_captured")
-        return self.captured / self.num_prey
+        return float(self.captured / self.num_prey)
 
     def prey_remaining(self):
         print("prey_remaining")
