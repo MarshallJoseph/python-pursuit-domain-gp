@@ -1,14 +1,34 @@
 import math
 import sys
-from functools import partial
-
+import ast
 import numpy as np
 
+from functools import partial
 from sklearn.preprocessing import normalize
-
 from prey_agent import PreyAgent
-
 from nltk import Tree
+
+
+
+
+def dfs(construct):
+    if isinstance(construct, ast.Expr):
+        dfs(construct.value)
+    elif isinstance(construct, ast.Call):
+        for arg in construct.args:
+            dfs(arg)
+        if construct.func.id == 'if_then_else':
+            for call in filter(lambda x: isinstance(x, ast.Call), construct.args):
+                call.args.insert(0, ast.Name(id=call.func.id))
+                call.func.id = 'partial'
+
+
+def partialise(expression):
+    """Takes an expression and add `partial` for all calls when passed as args to `if_then_else`."""
+    tree = ast.parse(expression)
+    expr = tree.body[0]
+    dfs(expr)
+    return ast.unparse(tree)
 
 
 class PredPreySimulator:
@@ -45,10 +65,15 @@ class PredPreySimulator:
         self.reset_environment()
         # working = "self.sin(self.if_then_else(partial(self.safe_div, self.prey_captured, 1.0), partial(self.safe_div, self.hit_wall, self.moves_remaining), partial(self.move_forward, 0.0)))"
         # original = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
-        original = "move_forward(if_then_else(add(0.0, sense_prey), average(moves_taken, moves_taken), if_then_else(-0.8623077206043339, prey_remaining, 1.0)))"
-        # sin(if_then_else(safe_div(prey_captured)(1.0))(safe_div(hit_wall)(moves_remaining))(move_forward(0.0)))
-        ind_tree = original
-        ind_tree = str(ind_tree).replace(", ", ")(")
+        # original = "move_forward(if_then_else(add(0.0, sense_prey), average(moves_taken, moves_taken), if_then_else(-0.8623077206043339, prey_remaining, 1.0)))"
+        # original = "less_than(if_then_else(moves_remaining, seek_prey, prey_remaining), average(prey_captured, seek_prey))"
+
+        original = partialise(
+            "less_than(if_then_else(moves_remaining, seek_prey, prey_remaining), average(prey_captured, seek_prey))")
+        print("Original: " + str(original) + "\n")
+
+        ind_tree = original.replace(", ", ")(")
+
         t = Tree.fromstring("(" + ind_tree + ")")
         t.pretty_print()
 
@@ -60,35 +85,7 @@ class PredPreySimulator:
         for f in function_list:
             original = original.replace(f, "self." + f)
 
-        print(original)
-
-        original = original.replace("(", ",")
-        print(original)
-
-        original = original.replace("self.if_then_else,s", "self.if_then_else(partial(s") + ")"
-        print(original)
-
-        original = original.replace("), ", "), partial(")
-        print(original)
-
-        original = original.replace(",self.if_then_else", "(self.if_then_else")
-        print(original)
-
-        original = original.replace("self.if_then_else,", "self.if_then_else(")
-        print(original)
-
-        #original = original.replace("self.if_then_else(partial(-0", "self.if_then_else(-0")
-        #print(original)
-
-        #original = original.replace("self.if_then_else(partial(0", "self.if_then_else(0")
-        #print(original)
-
-        self.move_forward(self.if_then_else(partial(self.add, 0.0, self.sense_prey),
-                                            partial(self.average, self.moves_taken, self.moves_taken),
-                                            partial(self.if_then_else(
-                                                -0.86230772060,
-                                                self.prey_remaining,
-                                                1.0))))
+        print("Callable: " + original + "\n")
 
         try:
             eval(original)
@@ -264,7 +261,7 @@ class PredPreySimulator:
             x = x()
         if callable(y):
             y = y()
-        return np.average(x, y)
+        return float(np.average(x, y))
 
     def float_and(self, x, y):
         print("float_and")
@@ -310,6 +307,8 @@ class PredPreySimulator:
 
     def less_than(self, x, y):
         print("less_than")
+        print("x = " + str(x))
+        print("y = " + str(y))
         if callable(x):
             x = x()
         if callable(y):
