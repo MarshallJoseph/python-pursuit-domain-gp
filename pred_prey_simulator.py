@@ -1,5 +1,6 @@
 import math
 import sys
+from functools import partial
 
 import numpy as np
 
@@ -40,21 +41,57 @@ class PredPreySimulator:
         # * Initialize Data *
         self.steps = []
 
-    def run(self, individual, pset):
+    def run(self, individual):
         self.reset_environment()
+        # working = "self.sin(self.if_then_else(partial(self.safe_div, self.prey_captured, 1.0), partial(self.safe_div, self.hit_wall, self.moves_remaining), partial(self.move_forward, 0.0)))"
+        # original = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
+        original = "move_forward(if_then_else(add(0.0, sense_prey), average(moves_taken, moves_taken), if_then_else(-0.8623077206043339, prey_remaining, 1.0)))"
         # sin(if_then_else(safe_div(prey_captured)(1.0))(safe_div(hit_wall)(moves_remaining))(move_forward(0.0)))
-        ind_tree = individual
+        ind_tree = original
         ind_tree = str(ind_tree).replace(", ", ")(")
         t = Tree.fromstring("(" + ind_tree + ")")
         t.pretty_print()
 
-        code = str(individual)
-        if len(pset.arguments) > 0:
-            # This section is a stripped version of the lambdify function of SymPy 0.6.6.
-            args = ",".join(arg for arg in pset.arguments)
-            code = "lambda {args}: {code}".format(args=args, code=code)
+        function_list = ['add', 'sub', 'mul', 'safe_div', 'average', 'float_and', 'float_or', 'float_not',
+                         'move_forward', 'rotate', 'if_then_else', 'greater_than', 'less_than', 'equal_to',
+                         'sin', 'cos', 'seek_prey', 'sense_prey', 'hit_wall', 'prey_captured', 'prey_remaining',
+                         'moves_taken', 'moves_remaining']
+
+        for f in function_list:
+            original = original.replace(f, "self." + f)
+
+        print(original)
+
+        original = original.replace("(", ",")
+        print(original)
+
+        original = original.replace("self.if_then_else,s", "self.if_then_else(partial(s") + ")"
+        print(original)
+
+        original = original.replace("), ", "), partial(")
+        print(original)
+
+        original = original.replace(",self.if_then_else", "(self.if_then_else")
+        print(original)
+
+        original = original.replace("self.if_then_else,", "self.if_then_else(")
+        print(original)
+
+        #original = original.replace("self.if_then_else(partial(-0", "self.if_then_else(-0")
+        #print(original)
+
+        #original = original.replace("self.if_then_else(partial(0", "self.if_then_else(0")
+        #print(original)
+
+        self.move_forward(self.if_then_else(partial(self.add, 0.0, self.sense_prey),
+                                            partial(self.average, self.moves_taken, self.moves_taken),
+                                            partial(self.if_then_else(
+                                                -0.86230772060,
+                                                self.prey_remaining,
+                                                1.0))))
+
         try:
-            eval(code, pset.context, {})
+            eval(original)
         except MemoryError:
             _, _, traceback = sys.exc_info()
             raise MemoryError("Python cannot evaluate a tree higher than 90.")
@@ -86,14 +123,22 @@ class PredPreySimulator:
               ", x_rot = " + str(round(self.x_rot, 2)) + ", y_rot = " + str(round(self.y_rot, 2)))
 
     def if_then_else(self, condition, x, y):
-        print("if_then_else")
+        if callable(condition):
+            condition = condition()
+            print("IF_THEN_ELSE CONDITION = " + str(condition))
         if condition:
+            if callable(x):
+                x = x()
             return x
         else:
+            if callable(y):
+                y = y()
             return y
 
     def move_forward(self, x):
         print("move_forward")
+        if callable(x):
+            x = x()
         if self.moves < self.max_moves:
             self.moves += 1  # increase number of moves by 1
             self.has_moved = True  # proof predator has move_forward primitive in tree

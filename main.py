@@ -68,9 +68,10 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 tree = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
 
 
+
 def eval_pred_prey(individual):
     # Run the generated individual
-    sim.run(individual, pset)
+    sim.run(individual)
     #return sim.captured,
 
 
