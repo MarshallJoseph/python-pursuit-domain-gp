@@ -9,8 +9,6 @@ from prey_agent import PreyAgent
 from nltk import Tree
 
 
-
-
 def dfs(construct):
     if isinstance(construct, ast.Expr):
         dfs(construct.value)
@@ -63,14 +61,8 @@ class PredPreySimulator:
 
     def run(self, individual):
         self.reset_environment()
-        # working = "self.sin(self.if_then_else(partial(self.safe_div, self.prey_captured, 1.0), partial(self.safe_div, self.hit_wall, self.moves_remaining), partial(self.move_forward, 0.0)))"
-        # original = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
-        # original = "move_forward(if_then_else(add(0.0, sense_prey), average(moves_taken, moves_taken), if_then_else(-0.8623077206043339, prey_remaining, 1.0)))"
-        # original = "less_than(if_then_else(moves_remaining, seek_prey, prey_remaining), average(prey_captured, seek_prey))"
-
-        original = partialise(
-            "less_than(if_then_else(moves_remaining, seek_prey, prey_remaining), average(prey_captured, seek_prey))")
-        print("Original: " + str(original) + "\n")
+        print(str(individual))
+        original = partialise(str(individual))
 
         ind_tree = original.replace(", ", ")(")
 
@@ -85,14 +77,12 @@ class PredPreySimulator:
         for f in function_list:
             original = original.replace(f, "self." + f)
 
-        print("Callable: " + original + "\n")
+        print(str(original))
 
-        try:
-            z = eval(original)
-            print(z)
-        except MemoryError:
-            _, _, traceback = sys.exc_info()
-            raise MemoryError("Python cannot evaluate a tree higher than 90.")
+        while self.moves < self.max_moves:
+            eval(original)
+            if not self.has_moved:  # if there is no move_forward being activated in the tree
+                self.push_predator()  # push predator in the direction he is facing manually
 
     def reset_environment(self):
         # Predator Properties
@@ -120,21 +110,26 @@ class PredPreySimulator:
         print("Pred: x_pos = " + str(round(self.x_pos, 2)) + ", y_pos = " + str(round(self.y_pos, 2)) +
               ", x_rot = " + str(round(self.x_rot, 2)) + ", y_rot = " + str(round(self.y_rot, 2)))
 
-    def if_then_else(self, condition, x, y):
-        if callable(condition):
-            condition = condition()
-            print("IF_THEN_ELSE CONDITION = " + str(condition))
-        if condition:
-            if callable(x):
-                x = x()
-            return x
-        else:
-            if callable(y):
-                y = y()
-            return y
+    def push_predator(self):
+        self.moves += 1  # increase number of moves by 1
+        new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
+        new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
+        if 0 < new_x_pos < self.width and 0 < new_y_pos < self.height:
+            self.x_pos = new_x_pos  # set pred to new x coordinate
+            self.y_pos = new_y_pos  # set pred to new y coordinate
+            self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
+        # * Prey Movement *
+        for i, p in enumerate(self.prey):
+            point1 = np.array((self.x_pos, self.y_pos))
+            point2 = np.array((p.x_pos, p.y_pos))
+            dist = np.linalg.norm(point1 - point2)
+            if dist < self.capture_radius:
+                self.steps.append("CAPTURE X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
+                self.captured += 1
+                del self.prey[i]  # delete prey from list after being captured
+            p.move_forward()  # move the prey if not in capture radius of predator
 
     def move_forward(self, x):
-        print("move_forward")
         if callable(x):
             x = x()
         if self.moves < self.max_moves:
@@ -145,21 +140,20 @@ class PredPreySimulator:
             if 0 < new_x_pos < self.width and 0 < new_y_pos < self.height:
                 self.x_pos = new_x_pos  # set pred to new x coordinate
                 self.y_pos = new_y_pos  # set pred to new y coordinate
-                self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
+                #self.steps.append("PRED X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
             # * Prey Movement *
             for i, p in enumerate(self.prey):
                 point1 = np.array((self.x_pos, self.y_pos))
                 point2 = np.array((p.x_pos, p.y_pos))
                 dist = np.linalg.norm(point1 - point2)
                 if dist < self.capture_radius:
-                    self.steps.append("CAPTURE X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
+                    #self.steps.append("CAPTURE X = " + str(self.x_pos) + " Y = " + str(self.y_pos))
                     self.captured += 1
                     del self.prey[i]  # delete prey from list after being captured
                 p.move_forward()  # move the prey if not in capture radius of predator
         return x  # pass value through function without using it
 
     def rotate(self, x, y):
-        print("rotate")
         if callable(x):
             x = x()
         if callable(y):
@@ -178,10 +172,9 @@ class PredPreySimulator:
         self.x_rot = new_x_rot
         self.y_rot = new_y_rot
         # return average of rotation values as float
-        return np.average(self.x_rot, self.y_rot)
+        return self.x_rot + self.y_rot / 2
 
     def set_speed(self, x):
-        print("set_speed")
         if callable(x):
             x = x()
         # check if 0 < speed < 1 before assigning
@@ -191,7 +184,6 @@ class PredPreySimulator:
         return self.speed
 
     def hit_wall(self):
-        print("hit_wall")
         new_x_pos = self.x_pos + (self.x_rot * self.speed)  # calculate next x coordinate
         new_y_pos = self.y_pos + (self.y_rot * self.speed)  # calculate next y coordinate
         if not 0 < new_x_pos < self.width or not 0 < new_y_pos < self.height:
@@ -200,7 +192,6 @@ class PredPreySimulator:
             return 0.0
 
     def seek_prey(self):
-        print("seek_prey")
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))  # predator x, y position
             point2 = np.array((p.x_pos, p.y_pos))  # prey x, y position
@@ -220,7 +211,6 @@ class PredPreySimulator:
         return 0.0
 
     def sense_prey(self):
-        print("sense_prey")
         for p in self.prey:
             point1 = np.array((self.x_pos, self.y_pos))
             point2 = np.array((p.x_pos, p.y_pos))
@@ -229,8 +219,19 @@ class PredPreySimulator:
                 return 1.0
         return 0.0
 
+    def if_then_else(self, condition, x, y):
+        if callable(condition):
+            condition = condition()
+        if condition:
+            if callable(x):
+                x = x()
+            return x
+        else:
+            if callable(y):
+                y = y()
+            return y
+
     def min_xy(self, x, y):
-        print("min_xy")
         if callable(x):
             x = x()
         if callable(y):
@@ -238,7 +239,6 @@ class PredPreySimulator:
         return np.min(x, y)
 
     def max_xy(self, x, y):
-        print("max_xy")
         if callable(x):
             x = x()
         if callable(y):
@@ -246,7 +246,6 @@ class PredPreySimulator:
         return np.max(x, y)
 
     def safe_div(self, x, y):
-        print("safe_div")
         if callable(x):
             x = x()
         if callable(y):
@@ -257,7 +256,6 @@ class PredPreySimulator:
             return 1.0
 
     def average(self, x, y):
-        print("average")
         if callable(x):
             x = x()
         if callable(y):
@@ -265,7 +263,6 @@ class PredPreySimulator:
         return x + y / 2
 
     def float_and(self, x, y):
-        print("float_and")
         if callable(x):
             x = x()
         if callable(y):
@@ -276,7 +273,6 @@ class PredPreySimulator:
             return 0.0
 
     def float_or(self, x, y):
-        print("float_or")
         if callable(x):
             x = x()
         if callable(y):
@@ -287,7 +283,6 @@ class PredPreySimulator:
             return 0.0
 
     def float_not(self, x):
-        print("float_not")
         if callable(x):
             x = x()
         if x:
@@ -296,7 +291,6 @@ class PredPreySimulator:
             return 1.0
 
     def greater_than(self, x, y):
-        print("greater_than")
         if callable(x):
             x = x()
         if callable(y):
@@ -307,7 +301,6 @@ class PredPreySimulator:
             return 0.0
 
     def less_than(self, x, y):
-        print("less_than")
         if callable(x):
             x = x()
         if callable(y):
@@ -318,7 +311,6 @@ class PredPreySimulator:
             return 0.0
 
     def equal_to(self, x, y):
-        print("equal_to")
         if callable(x):
             x = x()
         if callable(y):
@@ -329,7 +321,6 @@ class PredPreySimulator:
             return 0.0
 
     def add(self, x, y):
-        print("add")
         if callable(x):
             x = x()
         if callable(y):
@@ -337,7 +328,6 @@ class PredPreySimulator:
         return x + y
 
     def sub(self, x, y):
-        print("sub")
         if callable(x):
             x = x()
         if callable(y):
@@ -345,7 +335,6 @@ class PredPreySimulator:
         return x - y
 
     def mul(self, x, y):
-        print("mul")
         if callable(x):
             x = x()
         if callable(y):
@@ -353,29 +342,23 @@ class PredPreySimulator:
         return x * y
 
     def sin(self, x):
-        print("sin")
         if callable(x):
             x = x()
         return math.sin(x)
 
     def cos(self, x):
-        print("cos")
         if callable(x):
             x = x()
         return math.cos(x)
 
     def prey_captured(self):
-        print("prey_captured")
         return float(self.captured / self.num_prey)
 
     def prey_remaining(self):
-        print("prey_remaining")
         return (self.num_prey - self.captured) / self.num_prey
 
     def moves_taken(self):
-        print("moves_taken")
         return self.moves / self.max_moves
 
     def moves_remaining(self):
-        print("moves_remaining")
         return (self.max_moves - self.moves) / self.max_moves

@@ -1,11 +1,6 @@
-import math
 import operator
 import random
-
-import deap.gp
 import numpy as np
-
-from functools import partial
 
 from deap import algorithms
 from deap import base
@@ -14,7 +9,6 @@ from deap import tools
 from deap import gp
 
 from pred_prey_simulator import PredPreySimulator
-
 
 sim = PredPreySimulator(5000)  # Initialize simulation with 5000 steps
 
@@ -55,47 +49,43 @@ creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
 
 # Attribute generator
-toolbox.register("expr_init", gp.genFull, pset=pset, min_=2, max_=3)
+toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)
 
 # Structure initializers
 toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-#expr = gp.genFull(pset, min_=1, max_=3)
-#tree_stuff = gp.PrimitiveTree(expr)
-#print(str(tree_stuff))
-
-tree = "sin(if_then_else(safe_div(prey_captured, 1.0), safe_div(hit_wall, moves_remaining), move_forward(0.0)))"
-
-
 
 def eval_pred_prey(individual):
     # Run the generated individual
     sim.run(individual)
-    #return sim.captured,
+    print("Captured = " + str(sim.captured) + "\n")
+    return sim.captured,
 
 
 toolbox.register("evaluate", eval_pred_prey)
-toolbox.register("select", tools.selTournament, tournsize=7)
+toolbox.register("select", tools.selTournament, tournsize=3)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genFull, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
 
+toolbox.decorate("mate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
+toolbox.decorate("mutate", gp.staticLimit(key=operator.attrgetter("height"), max_value=17))
+
 
 def main():
     random.seed(1)
-    eval_pred_prey(tree)
-#    pop = toolbox.population(n=100)
-#    hof = tools.HallOfFame(1)
-#    stats = tools.Statistics(lambda ind: ind.fitness.values)
-#    stats.register("avg", np.mean)
-#    stats.register("std", np.std)
-#    stats.register("min", np.min)
-#    stats.register("max", np.max)
+    pop = toolbox.population(n=1000)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
 
-#    algorithms.eaSimple(pop, toolbox, 0.9, 0.1, 1000, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.9, 0.1, 100, stats, halloffame=hof)
 
-#    return pop, hof, stats
+    return pop, hof, stats
 
 
 if __name__ == "__main__":
